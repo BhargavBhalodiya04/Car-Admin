@@ -26,11 +26,13 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      await loginAction(username, password)
-    } catch (err: any) {
-      if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message?.includes('NEXT_REDIRECT')) {
-        throw err
+      const res = await loginAction(username, password)
+      if (res.success) {
+        router.push('/')
+      } else {
+        setError(res.error || 'Invalid Security ID or Access Code.')
       }
+    } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.')
     } finally {
       setLoading(false)
