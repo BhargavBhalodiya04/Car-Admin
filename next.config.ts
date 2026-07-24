@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'export', // Required for static HTML export (Capacitor)
   images: {
+    unoptimized: true, // Required for static HTML export
     remotePatterns: [
       {
         protocol: 'https',
@@ -13,6 +15,5 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: ['172.16.0.2', '172.18.96.1', '172.23.64.1', 'localhost:3000', 'localhost:3030'],
 };
-
 
 export default nextConfig;

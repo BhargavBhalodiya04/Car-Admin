@@ -1,33 +1,22 @@
-'use server'
-
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-
 export async function loginAction(username: string, password: string) {
-  // Support environment variables with secure fallback values
-  const STATIC_ID = process.env.ADMIN_USERNAME || 'bb151120'
-  const STATIC_PASS = process.env.ADMIN_PASSWORD || 'bb1511200@'
+  // Support environment variables with fallback values
+  const STATIC_ID = process.env.NEXT_PUBLIC_ADMIN_USERNAME || 'bb151120'
+  const STATIC_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'bb1511200@'
 
   console.log(`loginAction: username=${username}`)
 
   if (username === STATIC_ID && password === STATIC_PASS) {
-    console.log('loginAction: Success, setting secure cookie and redirecting...')
-    const cookieStore = await cookies()
-    cookieStore.set('admin_session', 'authorized', {
-      path: '/',
-      httpOnly: true, // Secure against XSS
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    })
-    redirect('/')
+    if (typeof window !== 'undefined') {
+      document.cookie = "admin_session=authorized; path=/; max-age=86400; SameSite=Lax"
+    }
+    return { success: true }
   }
 
-  console.log('loginAction: Failed credentials')
   return { success: false, error: 'Invalid Security ID or Access Code.' }
 }
 
 export async function logoutAction() {
-  const cookieStore = await cookies()
-  cookieStore.delete('admin_session')
-  redirect('/login')
+  if (typeof window !== 'undefined') {
+    document.cookie = "admin_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"
+  }
 }
