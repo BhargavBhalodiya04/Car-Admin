@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0F1115;
+  --color-foreground: #F2F2F2;
+
+  --color-card: #181A1F;
+  --color-card-foreground: #F2F2F2;
+
+  --color-popover: #181A1F;
+  --color-popover-foreground: #F2F2F2;
+
+  --color-primary: #FF6B00; /* Signal Orange */
+  --color-primary-foreground: #FFFFFF;
+
+  --color-secondary: #24272E;
+  --color-secondary-foreground: #F2F2F2;
+
+  --color-muted: #24272E;
+  --color-muted-foreground: #A0A0A0;
+
+  --color-accent: #24272E;
+  --color-accent-foreground: #FFFFFF;
+
+  --color-destructive: #DF3D3D;
+  --color-destructive-foreground: #F2F2F2;
+
+  --color-border: #24272E;
+  --color-input: #24272E;
+  --color-ring: #FF6B00;
+
+  --radius-lg: 0px;
+  --radius-md: 0px;
+  --radius-sm: 0px;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary;
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+/* Custom Utilities for Industrial Look */
+@layer utilities {
+  .shard {
+    @apply bg-card border border-border transition-all duration-300;
+  }
+  .shard:hover {
+    @apply border-primary/50 shadow-[0_0_20px_rgba(255,107,0,0.1)];
+  }
+  .glass {
+    @apply bg-background/80 backdrop-blur-md;
+  }
+}
