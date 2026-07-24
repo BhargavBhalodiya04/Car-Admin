@@ -1,17 +1,28 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Admin Smoke Test', () => {
-  test('should load the login page', async ({ page }) => {
+test.describe('Admin Authentication & Smoke Test', () => {
+  test('should redirect unauthenticated users to login, accept valid credentials, and load dashboard', async ({ page }) => {
+    // 1. Visit the home page (unauthenticated)
     await page.goto('/');
+
+    // 2. Expect to be redirected to the login page
+    await expect(page).toHaveURL(/.*\/login/);
+
+    // 3. Find the ID Number and Password inputs, then type credentials
+    const idInput = page.locator('input[placeholder="ID Number"]');
+    const passInput = page.locator('input[placeholder="••••••••••••"]');
     
-    // Check for common admin dashboard elements
-    // Since we are likely redirected to login if not authenticated
-    // we'll look for keywords like "Sign In" or "Admin"
-    const title = await page.title();
-    console.log('Page Title:', title);
-    
-    // Adjusted for a typical CarBooking Admin setup
-    // We expect the page to load without a 404/500
-    await expect(page).not.toHaveTitle(/404/);
+    await idInput.fill('bb151120');
+    await passInput.fill('bb1511200@');
+
+    // 4. Click the INITIALIZE SESSION button
+    const submitBtn = page.getByRole('button', { name: 'INITIALIZE SESSION' });
+    await submitBtn.click();
+
+    // 5. Expect to be redirected back to the home page (dashboard command center)
+    await expect(page).toHaveURL('http://localhost:3030/');
+
+    // 6. Verify command center elements are visible on the dashboard
+    await expect(page.locator('h1')).toContainText(/command/i);
   });
 });

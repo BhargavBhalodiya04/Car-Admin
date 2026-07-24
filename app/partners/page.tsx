@@ -38,7 +38,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   )
 }
 
-export default function PartnersPage() {
+function PartnersPageContent() {
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('q') || ''
 
@@ -166,9 +166,9 @@ export default function PartnersPage() {
           <div className="flex justify-between border-b border-border/30 pb-1">
             <span className="text-muted-foreground">Key Status:</span>
             <span className={cn(
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') ? "text-red-500 font-bold" : "text-emerald-500"
+              (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('pk_')) ? "text-red-500 font-bold" : "text-emerald-500"
             )}>
-              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') 
+              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('pk_')
                 ? 'DETECTED_STRIPE_KEY_ERROR' 
                 : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
                   ? 'CONFIGURED_OK' 
@@ -178,5 +178,17 @@ export default function PartnersPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PartnersPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="shard p-12 text-center font-mono animate-pulse uppercase">
+        Querying Network Nodes...
+      </div>
+    }>
+      <PartnersPageContent />
+    </React.Suspense>
   )
 }

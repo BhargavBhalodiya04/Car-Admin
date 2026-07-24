@@ -4,17 +4,18 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 export async function loginAction(username: string, password: string) {
-  const STATIC_ID = 'bb151120'
-  const STATIC_PASS = 'bb1511200@'
+  // Support environment variables with secure fallback values
+  const STATIC_ID = process.env.ADMIN_USERNAME || 'bb151120'
+  const STATIC_PASS = process.env.ADMIN_PASSWORD || 'bb1511200@'
 
-  console.log(`loginAction: username=${username}, password=${password}`)
+  console.log(`loginAction: username=${username}`)
 
   if (username === STATIC_ID && password === STATIC_PASS) {
-    console.log('loginAction: Success, setting cookie and redirecting...')
+    console.log('loginAction: Success, setting secure cookie and redirecting...')
     const cookieStore = await cookies()
     cookieStore.set('admin_session', 'authorized', {
       path: '/',
-      httpOnly: false,
+      httpOnly: true, // Secure against XSS
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     })
