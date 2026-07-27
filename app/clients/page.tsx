@@ -45,9 +45,9 @@ export default function ClientsPage() {
         }))
         setClients(enrichedClients)
       }
-    } catch (err: any) {
-      console.error('Error fetching clients:', err)
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -64,9 +64,9 @@ export default function ClientsPage() {
       const { error } = await supabase.rpc('delete_user', { user_id_param: id });
       if (error) throw error;
       setClients(prev => prev.filter(c => c.id !== id));
-    } catch (err: any) {
-      console.error('Delete error:', err);
-      alert('Failed to delete client: ' + err.message);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      alert('Failed to delete client: ' + error.message);
     }
   };
 

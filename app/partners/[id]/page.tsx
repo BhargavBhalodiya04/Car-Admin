@@ -166,7 +166,6 @@ export default function PartnerReviewPage() {
       setShowRejectionForm(false)
       setRejectionReason('')
     } else {
-      console.error('KYC Update Error:', error)
       alert('FAILED_TO_UPDATE_KYC: ' + error.message)
     }
     setActionLoading(false)

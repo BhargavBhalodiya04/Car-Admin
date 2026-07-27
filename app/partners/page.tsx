@@ -76,9 +76,9 @@ export default function PartnersPage() {
       const { error } = await supabase.rpc('delete_user', { user_id_param: id });
       if (error) throw error;
       setPartners(prev => prev.filter(p => p.id !== id));
-    } catch (err: any) {
-      console.error('Delete error:', err);
-      alert('Failed to delete partner: ' + err.message);
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      alert('Failed to delete partner: ' + error.message);
     }
   };
 
@@ -152,31 +152,6 @@ export default function PartnersPage() {
         />
       )}
 
-      {/* Connectivity Diagnostics */}
-      <div className="mt-12 p-4 bg-secondary/20 border border-border/50 rounded-lg">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
-          <div className="w-1 h-1 rounded-full bg-primary" />
-          System Diagnostics
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[9px] font-mono uppercase">
-          <div className="flex justify-between border-b border-border/30 pb-1">
-            <span className="text-muted-foreground">Supabase URL:</span>
-            <span>{process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1] || 'NOT_CONFIGURED'}</span>
-          </div>
-          <div className="flex justify-between border-b border-border/30 pb-1">
-            <span className="text-muted-foreground">Key Status:</span>
-            <span className={cn(
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') ? "text-red-500 font-bold" : "text-emerald-500"
-            )}>
-              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.startsWith('sb_publishable_') 
-                ? 'DETECTED_STRIPE_KEY_ERROR' 
-                : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY 
-                  ? 'CONFIGURED_OK' 
-                  : 'MISSING'}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

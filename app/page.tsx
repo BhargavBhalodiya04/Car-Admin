@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
 import React from 'react'
-import { supabase } from "@/lib/supabase"
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 import { 
   DollarSign, 
@@ -14,12 +15,12 @@ import {
   CalendarCheck,
   Search,
   Bell
-} from "lucide-react"
-import { StatsCard } from "@/components/stats-card"
-import { RevenueChart } from "@/components/revenue-chart"
-import { FleetDistribution } from "@/components/fleet-distribution"
-import { KYCQueue } from "@/components/kyc-queue"
-import { cn } from "@/lib/utils"
+} from 'lucide-react'
+import { StatsCard } from '@/components/stats-card'
+import { RevenueChart } from '@/components/revenue-chart'
+import { FleetDistribution } from '@/components/fleet-distribution'
+import { KYCQueue } from '@/components/kyc-queue'
+import { cn } from '@/lib/utils'
 
 interface DashboardStats {
   revenue: number
@@ -62,27 +63,21 @@ export default function DashboardPage() {
       setLoading(true)
       setError(null)
       try {
-        console.log('--- ADMIN DASHBOARD: START FETCHING ---')
-        
-        // Diagnostic: Check if env variables are present at runtime
+        logger.debug('Dashboard: fetching data')
+
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
           throw new Error('Supabase configuration missing in environment. Check .env.local')
         }
 
-        console.log('Fetching tactical dashboard data via RPC...')
         const { data: rpcData, error: rpcError } = await supabase.rpc('get_admin_dashboard_stats')
 
         if (rpcError) {
-          console.error('RPC call error detail:', rpcError)
-          throw new Error(`RPC call failed: ${rpcError.message} (Code: ${rpcError.code})`)
+          throw new Error(`Dashboard data fetch failed: ${rpcError.message}`)
         }
         
         if (!rpcData) {
-          console.warn('RPC returned empty or null data')
-          throw new Error('No tactical data received from command center')
+          throw new Error('No dashboard data received')
         }
-
-        console.log('Tactical data received:', rpcData)
 
         const { 
           stats: fetchedStats, 
@@ -122,12 +117,12 @@ export default function DashboardPage() {
             }
           }))
         }
-      } catch (err: any) {
-        console.error('CRITICAL DASHBOARD ERROR:', err)
-        setError(err.message || 'System linkage failure')
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'System linkage failure'
+        logger.error('Dashboard fetch error', err)
+        setError(message)
       } finally {
         setLoading(false)
-        console.log('--- ADMIN DASHBOARD: FETCHING COMPLETE ---')
       }
     }
 

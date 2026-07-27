@@ -73,9 +73,9 @@ export default function VehicleDetailsPage() {
 
       if (error) throw error
       if (data) setVehicle(data as Vehicle)
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      setError(error.message)
     } finally {
       setLoading(false)
     }

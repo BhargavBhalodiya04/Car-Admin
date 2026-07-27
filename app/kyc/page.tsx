@@ -87,8 +87,7 @@ export default function KYCQueuePage() {
 
       combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setEntities(combined)
-    } catch (err) {
-      console.error('KYC Transmission Error:', err)
+    } catch {
     } finally {
       setLoading(false)
     }
@@ -112,7 +111,6 @@ export default function KYCQueuePage() {
       if (!error) {
         setEntities(prev => prev.filter(e => e.id !== id))
       } else {
-        console.error('Update Error:', error)
         alert('Failed to update status.')
       }
     } finally {

@@ -63,9 +63,9 @@ export default function VehiclesPage() {
       
       if (error) throw error
       if (data) setVehicles(data as any[])
-    } catch (err: any) {
-      console.error('Error fetching vehicles:', err)
-      setError(err.message)
+    } catch (err: unknown) {
+      const error = err instanceof Error ? err : new Error('Unknown error')
+      setError(error.message)
     } finally {
       setLoading(false)
     }

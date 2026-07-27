@@ -3,6 +3,7 @@
 import React from 'react'
 import { X, Calendar, User, Car, DollarSign, MapPin, Navigation, Save, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { bookingSchema } from '@/lib/validations'
 
 interface Client {
   id: string
@@ -43,6 +44,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
   const [clients, setClients] = React.useState<Client[]>([])
   const [cars, setCars] = React.useState<Vehicle[]>([])
   const [fetchLoading, setFetchLoading] = React.useState(true)
+  const [validationError, setValidationError] = React.useState<string | null>(null)
 
   const [formData, setFormData] = React.useState<Booking>({
     client_id: '',
@@ -60,6 +62,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
   React.useEffect(() => {
     if (isOpen) {
       fetchData()
+      setValidationError(null)
       if (booking) {
         setFormData({
           client_id: booking.client_id || '',
@@ -104,27 +107,33 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setValidationError(null)
+
+    const validation = bookingSchema.safeParse(formData)
+    if (!validation.success) {
+      setValidationError(validation.error.issues[0]?.message || 'Invalid booking data.')
+      return
+    }
+
     setLoading(true)
 
     try {
       if (booking?.id) {
-        // UPDATE
         const { error } = await supabase
           .from('bookings')
           .update({
             ...formData,
-            rental_price: formData.total_price, // fallback constraint
+            rental_price: formData.total_price,
             updated_at: new Date().toISOString()
           })
           .eq('id', booking.id)
         if (error) throw error
       } else {
-        // CREATE
         const { error } = await supabase
           .from('bookings')
           .insert([{
             ...formData,
-            rental_price: formData.total_price, // fallback constraint
+            rental_price: formData.total_price,
             trip_fee: 0,
             insurance_fee: 0,
             created_at: new Date().toISOString(),
@@ -136,8 +145,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
       onClose()
     } catch (err: unknown) {
       const error = err as Error
-      console.error('Booking Operation Error:', error)
-      alert('MANIFEST_FAILURE: ' + error.message)
+      setValidationError(error.message || 'Booking operation failed')
     } finally {
       setLoading(false)
     }
@@ -148,7 +156,6 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="shard w-full max-w-2xl bg-background border-primary/20 shadow-[0_0_50px_rgba(var(--primary),0.1)] overflow-hidden">
-        {/* Header */}
         <div className="bg-secondary/50 px-6 py-4 border-b border-border flex justify-between items-center">
           <div>
             <h2 className="text-xl font-black uppercase tracking-tighter italic">
@@ -161,11 +168,15 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
           </button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {validationError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-mono uppercase">
+              Error: {validationError}
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
-            {/* Client Selection */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <User className="w-3 h-3 text-primary" /> Target_Client
@@ -183,7 +194,6 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               </select>
             </div>
 
-            {/* Car Selection */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Car className="w-3 h-3 text-primary" /> Vehicle_Unit
@@ -201,7 +211,6 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               </select>
             </div>
 
-            {/* Dates */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Calendar className="w-3 h-3 text-primary" /> Start_Timestamp
@@ -228,7 +237,6 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               />
             </div>
 
-            {/* Locations */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <MapPin className="w-3 h-3 text-primary" /> Pickup_Sector
@@ -236,6 +244,7 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               <input 
                 type="text" 
                 placeholder="Sector/Location ID"
+                maxLength={500}
                 className="w-full bg-secondary/30 border border-border p-2.5 text-xs font-mono focus:outline-none focus:border-primary transition-colors uppercase placeholder:opacity-30"
                 value={formData.pickup_location}
                 onChange={(e) => setFormData({...formData, pickup_location: e.target.value})}
@@ -249,13 +258,13 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               <input 
                 type="text" 
                 placeholder="Sector/Location ID"
+                maxLength={500}
                 className="w-full bg-secondary/30 border border-border p-2.5 text-xs font-mono focus:outline-none focus:border-primary transition-colors uppercase placeholder:opacity-30"
                 value={formData.dropoff_location}
                 onChange={(e) => setFormData({...formData, dropoff_location: e.target.value})}
               />
             </div>
 
-            {/* Financials & Status */}
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <DollarSign className="w-3 h-3 text-primary" /> Gross_Revenue_Target
@@ -263,9 +272,11 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
               <input 
                 type="number" 
                 required
+                min={0}
+                max={99999999}
                 className="w-full bg-secondary/30 border border-border p-2.5 text-xs font-mono focus:outline-none focus:border-primary transition-colors"
                 value={formData.total_price}
-                onChange={(e) => setFormData({...formData, total_price: parseFloat(e.target.value)})}
+                onChange={(e) => setFormData({...formData, total_price: Math.max(0, parseFloat(e.target.value) || 0)})}
               />
             </div>
 
@@ -317,7 +328,6 @@ export function BookingModal({ isOpen, onClose, onSuccess, booking }: BookingMod
             </div>
           </div>
 
-          {/* Actions */}
           <div className="pt-6 border-t border-border flex gap-4">
             <button 
               type="button" 

@@ -67,8 +67,7 @@ export default function BookingsPage() {
       if (error) throw error
       setBookings(data || [])
     } catch (err: unknown) {
-      const error = err as Error
-      console.error('Error fetching bookings:', error)
+      const error = err instanceof Error ? err : new Error('Unknown error')
       setError(error.message)
     } finally {
       setLoading(false)

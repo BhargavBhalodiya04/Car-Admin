@@ -1,37 +1,57 @@
 "use client"
 
 import React from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { 
   ShieldCheck, 
   Lock, 
   Mail, 
   ArrowRight, 
   AlertCircle,
-  Settings
 } from 'lucide-react'
 import { loginAction } from './actions'
+import { loginSchema } from '@/lib/validations'
 
 export default function LoginPage() {
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
+    const validation = loginSchema.safeParse({ username, password })
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message || 'Invalid input.')
+      return
+    }
+
+    setLoading(true)
+
     try {
-      await loginAction(username, password)
-    } catch (err: any) {
-      if (err?.digest?.startsWith('NEXT_REDIRECT') || err?.message?.includes('NEXT_REDIRECT')) {
+      await loginAction(validation.data.username, validation.data.password)
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'digest' in err &&
+        typeof (err as { digest: string }).digest === 'string' &&
+        (err as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+      ) {
         throw err
       }
-      setError(err.message || 'An unexpected error occurred.')
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message: string }).message === 'string' &&
+        (err as { message: string }).message.includes('NEXT_REDIRECT')
+      ) {
+        throw err
+      }
+      const message = err instanceof Error ? err.message : 'An unexpected error occurred.'
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -39,12 +59,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden relative">
-      {/* Industrial Background Grid */}
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
            style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
       </div>
       
-      {/* Noise Texture Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] blend-overlay"></div>
 
       <div className="w-full max-w-md p-8 relative z-10">
@@ -53,7 +71,6 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <ShieldCheck className="w-10 h-10 text-black relative z-10" />
             
-            {/* Corner Accents */}
             <div className="absolute top-0 left-0 w-2 h-2 bg-black"></div>
             <div className="absolute bottom-0 right-0 w-2 h-2 bg-black"></div>
           </div>
@@ -67,7 +84,6 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-zinc-900 border border-zinc-800 p-8 relative">
-          {/* Form Corner Accents */}
           <div className="absolute -top-[1px] -left-[1px] w-4 h-4 border-t-2 border-l-2 border-orange-500"></div>
           <div className="absolute -bottom-[1px] -right-[1px] w-4 h-4 border-b-2 border-r-2 border-orange-500"></div>
 
@@ -82,6 +98,7 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  maxLength={128}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-none py-3 pl-12 pr-4 text-white placeholder:text-zinc-700 focus:outline-none focus:border-orange-500 transition-colors font-mono"
                   placeholder="ID Number"
                   required
@@ -99,6 +116,7 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  maxLength={256}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-none py-3 pl-12 pr-4 text-white placeholder:text-zinc-700 focus:outline-none focus:border-orange-500 transition-colors font-mono"
                   placeholder="••••••••••••"
                   required
